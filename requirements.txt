@@ -1,0 +1,30 @@
+# Database (install first to determine httpx version)
+supabase>=2.10.0,<3.0
+
+# HTTP & Web Scraping (compatible with supabase)
+httpx>=0.24,<0.26
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+# Playwright removed - optional for dynamic scraping, adds build complexity
+
+# Data validation & parsing (compatible with Python 3.14)
+pydantic>=2.9.0
+pydantic-settings>=2.6.0
+
+# Scheduling
+APScheduler>=3.10.0
+
+# Logging
+structlog>=24.1.0
+
+# Retry logic
+tenacity>=8.2.0
+
+# Time & timezone (use standard library datetime instead of pendulum to avoid build issues)
+python-dateutil>=2.8.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# YAML support
+pyyaml>=6.0

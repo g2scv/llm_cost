@@ -1,0 +1,19 @@
+# Optional blocklist for models to skip during pricing collection
+# Useful for excluding deprecated, private, or problematic models
+
+blocklist:
+  # Example: Skip deprecated models
+  # - "openai/gpt-3.5-turbo-0301"
+
+  # Example: Skip test models
+  # - "test/model"
+
+  # Currently empty - add as needed
+  []
+
+# Reason codes for blocking
+reasons:
+  deprecated: "Model is deprecated and no longer supported"
+  test: "Test model not for production use"
+  private: "Private model not publicly available"
+  no_pricing: "Provider does not publish pricing for this model"

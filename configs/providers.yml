@@ -1,0 +1,113 @@
+# Provider-specific configuration for pricing scraping
+# This file contains URLs and selectors for known providers
+
+providers:
+  openai:
+    slug: openai
+    display_name: OpenAI
+    homepage_url: https://openai.com
+    pricing_url: https://platform.openai.com/docs/pricing
+    selectors:
+      pricing_table: ".pricing-table"
+      model_row: "tr[data-model]"
+      input_price: "td.input-price"
+      output_price: "td.output-price"
+    notes: "Prices typically shown per 1M tokens"
+
+  anthropic:
+    slug: anthropic
+    display_name: Anthropic
+    homepage_url: https://www.anthropic.com
+    pricing_url: https://docs.claude.com/en/docs/about-claude/pricing#model-pricing
+    selectors:
+      pricing_section: "#pricing"
+      model_card: ".model-pricing-card"
+    notes: "Prices shown per MTok (million tokens)"
+
+  google:
+    slug: google
+    display_name: Google AI
+    homepage_url: https://ai.google.dev
+    pricing_url: https://ai.google.dev/pricing
+    selectors:
+      pricing_table: "table.pricing"
+    notes: "Check for Gemini model pricing"
+
+  cohere:
+    slug: cohere
+    display_name: Cohere
+    homepage_url: https://cohere.com
+    pricing_url: https://cohere.com/pricing
+    notes: "Prices per 1M tokens"
+
+  mistral:
+    slug: mistral
+    display_name: Mistral AI
+    homepage_url: https://mistral.ai
+    pricing_url: https://docs.mistral.ai/platform/pricing/
+    notes: "Check documentation for latest pricing"
+
+  groq:
+    slug: groq
+    display_name: Groq
+    homepage_url: https://groq.com
+    pricing_url: https://groq.com/pricing/
+    notes: "Known for fast inference"
+
+  together:
+    slug: together
+    display_name: Together AI
+    homepage_url: https://together.ai
+    pricing_url: https://together.ai/pricing
+    notes: "Hosting provider with multiple models"
+
+  fireworks:
+    slug: fireworks
+    display_name: Fireworks AI
+    homepage_url: https://fireworks.ai
+    pricing_url: https://fireworks.ai/pricing
+    notes: "Hosting provider"
+
+  deepinfra:
+    slug: deepinfra
+    display_name: DeepInfra
+    homepage_url: https://deepinfra.com
+    pricing_url: https://deepinfra.com/pricing
+    notes: "Hosting provider with competitive pricing"
+
+  replicate:
+    slug: replicate
+    display_name: Replicate
+    homepage_url: https://replicate.com
+    pricing_url: https://replicate.com/pricing
+    notes: "Per-second billing model"
+
+  perplexity:
+    slug: perplexity
+    display_name: Perplexity AI
+    homepage_url: https://perplexity.ai
+    pricing_url: https://docs.perplexity.ai/docs/pricing
+    notes: "Check for API pricing"
+
+# Trusted domains for web fallback scraping
+trusted_domains:
+  - openai.com
+  - anthropic.com
+  - cohere.com
+  - ai.google.dev
+  - docs.mistral.ai
+  - groq.com
+  - together.ai
+  - fireworks.ai
+  - deepinfra.com
+  - replicate.com
+  - perplexity.ai
+  - openrouter.ai
+  - huggingface.co
+
+# Scraping settings
+scraping:
+  user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+  timeout_seconds: 30
+  retry_attempts: 3
+  rate_limit_delay_ms: 1000

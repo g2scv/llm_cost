@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  pricing-tracker:
+    build:
+      context: ..
+      dockerfile: ops/Dockerfile
+    container_name: pricing-tracker
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    volumes:
+      - ../logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Healthcheck (optional)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

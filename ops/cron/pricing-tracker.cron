@@ -1,0 +1,8 @@
+# OpenRouter Pricing Tracker - runs daily at 2 AM
+# Edit with: crontab -e
+
+# Run daily at 2 AM
+0 2 * * * cd /opt/pricing-tracker && /opt/pricing-tracker/.venv/bin/python -m app.main --once >> /var/log/pricing-tracker.log 2>&1
+
+# Alternative: Run every 24 hours (more flexible)
+# @daily cd /opt/pricing-tracker && /opt/pricing-tracker/.venv/bin/python -m app.main --once >> /var/log/pricing-tracker.log 2>&1
