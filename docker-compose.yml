@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  llm-cost-scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: llm-cost-scraper
+    restart: unless-stopped
+
+    environment:
+      # Required: Pricing Database (stores model catalog and pricing snapshots)
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
+
+      # Required: OpenRouter API
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+
+      # Optional: Backend Sync (syncs to llm_models table)
+      BACKEND_SUPABASE_URL: ${BACKEND_SUPABASE_URL:-}
+      BACKEND_SUPABASE_SERVICE_KEY: ${BACKEND_SUPABASE_SERVICE_KEY:-}
+
+      # Optional: Default models for backend
+      DEFAULT_CHAT_MODEL_ID: ${DEFAULT_CHAT_MODEL_ID:-}
+      DEFAULT_EMBEDDING_MODEL_ID: ${DEFAULT_EMBEDDING_MODEL_ID:-openai/text-embedding-3-large}
+
+      # Optional: Brave Search API (for provider scraping)
+      BRAVE_API_KEY: ${BRAVE_API_KEY:-}
+
+      # Scheduler settings
+      RUN_INTERVAL_HOURS: ${RUN_INTERVAL_HOURS:-24}
+      RUN_ON_STARTUP: ${RUN_ON_STARTUP:-true}
+
+      # Application settings
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      REQUEST_TIMEOUT_SECONDS: ${REQUEST_TIMEOUT_SECONDS:-30}
+      PRICE_CHANGE_THRESHOLD_PERCENT: ${PRICE_CHANGE_THRESHOLD_PERCENT:-30.0}
+      MAX_PARALLEL_MODELS: ${MAX_PARALLEL_MODELS:-10}
+      ENABLE_PROVIDER_SCRAPING: ${ENABLE_PROVIDER_SCRAPING:-false}
+
+      # Auto-sync settings
+      AUTO_SYNC_BACKEND: ${AUTO_SYNC_BACKEND:-true}
+      CHECK_MISSING_MODELS: ${CHECK_MISSING_MODELS:-true}
+
+    volumes:
+      # Persist logs
+      - ./logs:/app/logs
+
+      # Optional: Mount .env file (alternative to environment variables)
+      # - ./.env:/app/.env:ro
+
+    networks:
+      - llm-cost-network
+
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  llm-cost-network:
+    driver: bridge
