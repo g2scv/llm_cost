@@ -12,6 +12,7 @@ from app.supabase_repo import SupabaseRepo
 from app.discovery import ModelDiscovery
 from app.validation import PricingValidator
 from app.normalize import normalize_openrouter_pricing, choose_max_pricing
+from app.backend_sync import build_backend_sync
 from app.providers.registry import get_adapter
 
 logger = structlog.get_logger(__name__)
@@ -31,6 +32,17 @@ class PricingPipeline:
         self.discovery = ModelDiscovery(self.or_client, self.repo)
         self.validator = PricingValidator(
             repo=self.repo, max_change_percent=config.price_change_threshold_percent
+        )
+        forced_defaults: Dict[str, str] = {}
+        if config.default_chat_model_id:
+            forced_defaults["chat"] = config.default_chat_model_id
+        if config.default_embedding_model_id:
+            forced_defaults["embedding"] = config.default_embedding_model_id
+
+        self.backend_sync = build_backend_sync(
+            config.backend_supabase_url,
+            config.backend_supabase_service_key,
+            forced_defaults if forced_defaults else None,
         )
 
     async def run_full_pipeline(self):
@@ -63,6 +75,9 @@ class PricingPipeline:
         except Exception as e:
             logger.error("pricing_pipeline_failed", error=str(e))
             raise
+        finally:
+            if self.backend_sync.enabled:
+                self.backend_sync.finalize()
 
     async def _collect_pricing_for_models(self, models: List[Dict[str, Any]]):
         """
@@ -72,16 +87,23 @@ class PricingPipeline:
             models: List of model dicts from OpenRouter API
         """
         today = date.today()
+        concurrency = max(1, self.config.max_parallel_models)
+        semaphore = asyncio.Semaphore(concurrency)
 
-        for model in models:
-            try:
-                await self._collect_pricing_for_model(model, today)
-            except Exception as e:
-                logger.error(
-                    "failed_to_collect_pricing_for_model",
-                    model=model.get("id"),
-                    error=str(e),
-                )
+        async def process_model(model: Dict[str, Any]) -> None:
+            async with semaphore:
+                try:
+                    await self._collect_pricing_for_model(model, today)
+                except Exception as e:
+                    logger.error(
+                        "failed_to_collect_pricing_for_model",
+                        model=model.get("id"),
+                        error=str(e),
+                    )
+
+        tasks = [asyncio.create_task(process_model(model)) for model in models]
+        if tasks:
+            await asyncio.gather(*tasks)
 
     async def _collect_pricing_for_model(
         self, model: Dict[str, Any], snapshot_date: date
@@ -109,9 +131,11 @@ class PricingPipeline:
 
         model_id = model_record["model_id"]
 
+        normalized_pricing = None
+
         # Step 1: Collect from OpenRouter API
         if "pricing" in model:
-            await self._store_openrouter_pricing(
+            normalized_pricing = await self._store_openrouter_pricing(
                 model_id, model["pricing"], snapshot_date, model_slug
             )
 
@@ -139,6 +163,9 @@ class PricingPipeline:
         else:
             logger.debug("provider_scraping_disabled", model=model_slug)
 
+        if self.backend_sync.enabled:
+            self.backend_sync.stage_model(model, normalized_pricing)
+
     async def _store_openrouter_pricing(
         self,
         model_id: str,
@@ -152,6 +179,13 @@ class PricingPipeline:
         # Normalize pricing
         normalized = normalize_openrouter_pricing(pricing)
 
+        # Override known curated pricing for specific models
+        if model_slug == "text-embedding-3-large":
+            normalized["prompt_usd_per_million"] = Decimal("0.13")
+            normalized["completion_usd_per_million"] = None
+            normalized["batch_usd_per_million"] = Decimal("0.065")
+            normalized["notes"] = "OpenAI published pricing"
+
         # Validate
         prompt_price = normalized.get("prompt_usd_per_million")
         completion_price = normalized.get("completion_usd_per_million")
@@ -163,7 +197,7 @@ class PricingPipeline:
                 model=model_slug,
                 msg="No valid pricing available (likely dynamic routing or unavailable)",
             )
-            return
+            return None
 
         # Check if model has image pricing (affects validation)
         has_image_pricing = pricing.get("image") is not None
@@ -182,7 +216,7 @@ class PricingPipeline:
                 warnings=warnings,
             )
             # Don't store invalid pricing
-            return
+            return None
 
         # Check for significant changes
         alert, changes = self.validator.check_price_change(
@@ -208,6 +242,8 @@ class PricingPipeline:
         )
 
         logger.info("openrouter_pricing_stored", model=model_slug)
+
+        return normalized_floats
 
     async def _collect_provider_pricing(
         self,

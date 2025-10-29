@@ -60,6 +60,12 @@ SUPABASE_SERVICE_KEY=your_service_role_key
 # OpenRouter (Required)
 OPENROUTER_API_KEY=sk-or-v1-your_key
 
+# Optional backend sync (updates g2scv-backend public.llm_models)
+BACKEND_SUPABASE_URL=https://your-backend.supabase.co
+BACKEND_SUPABASE_SERVICE_KEY=your_backend_service_role_key
+DEFAULT_CHAT_MODEL_ID=openrouter/gpt-4o-mini
+DEFAULT_EMBEDDING_MODEL_ID=text-embedding-3-large
+
 # Brave Search (Optional - for provider scraping)
 BRAVE_API_KEY=BSA-your_key
 ENABLE_PROVIDER_SCRAPING=false  # Set to true to enable
@@ -67,7 +73,17 @@ ENABLE_PROVIDER_SCRAPING=false  # Set to true to enable
 # Optional Settings
 REQUEST_TIMEOUT_SECONDS=30
 PRICE_CHANGE_THRESHOLD_PERCENT=30.0
+
+# Parallelism (Optional)
+MAX_PARALLEL_MODELS=10
 ```
+
+When the backend Supabase credentials are provided, each run will:
+
+- Upsert normalized pricing records into `public.llm_models`
+- Flag models missing from the latest crawl as inactive (and clear defaults)
+- Preserve capability metadata (vision, tools, reasoning) for downstream apps
+- Honor `DEFAULT_CHAT_MODEL_ID` and `DEFAULT_EMBEDDING_MODEL_ID` overrides when the specified models are available
 
 ### Database Setup
 

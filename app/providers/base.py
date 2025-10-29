@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 from decimal import Decimal
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -24,8 +24,7 @@ class PricingResult(BaseModel):
     source_url: str
     notes: Optional[str] = None
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class ProviderAdapter(ABC):
