@@ -47,6 +47,22 @@ class Config(BaseSettings):
     # Concurrency
     max_parallel_models: int = 10
 
+    # Model Filtering (OpenRouter query params)
+    # Comma-separated list of required supported_parameters
+    model_filter_supported_parameters: str = "structured_outputs,response_format,stop"
+    # Set to true to exclude distillable models
+    model_filter_distillable: bool = False
+    # Input modalities filter (text, image, audio, video)
+    model_filter_input_modalities: str = "text"
+    # Output modalities filter (text, image, embeddings)
+    model_filter_output_modalities: str = "text"
+
+    # Docker Scheduler Settings (for containerized deployment)
+    run_interval_hours: int = 24
+    run_on_startup: bool = True
+    auto_sync_backend: bool = True
+    check_missing_models: bool = True
+
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False
     )

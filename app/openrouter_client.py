@@ -45,9 +45,22 @@ class OpenRouterClient:
         wait=wait_exponential(multiplier=1, min=2, max=10),
         reraise=True,
     )
-    def list_models(self) -> List[Dict[str, Any]]:
+    def list_models(
+        self,
+        supported_parameters: Optional[str] = None,
+        distillable: Optional[bool] = None,
+        input_modalities: Optional[str] = None,
+        output_modalities: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
         """
-        Fetch all models from OpenRouter Models API
+        Fetch models from OpenRouter Models API with optional filtering
+
+        Args:
+            supported_parameters: Comma-separated list of required parameters
+                                 (e.g., "structured_outputs,response_format,stop")
+            distillable: Filter by distillable flag (True/False/None for no filter)
+            input_modalities: Filter by input modalities (e.g., "text")
+            output_modalities: Filter by output modalities (e.g., "text")
 
         Returns:
             List of model dictionaries with pricing and metadata
@@ -55,20 +68,37 @@ class OpenRouterClient:
         Raises:
             httpx.HTTPError: On API errors
         """
-        logger.info("fetching_models_from_openrouter")
+        # Build query parameters for filtering
+        params = {}
+        if supported_parameters:
+            params["supported_parameters"] = supported_parameters
+        if distillable is not None:
+            params["distillable"] = str(distillable).lower()
+        if input_modalities:
+            params["input_modalities"] = input_modalities
+        if output_modalities:
+            params["output_modalities"] = output_modalities
+
+        filter_info = {
+            "supported_parameters": supported_parameters,
+            "distillable": distillable,
+            "input_modalities": input_modalities,
+            "output_modalities": output_modalities,
+        }
+        logger.info("fetching_models_from_openrouter", filters=filter_info)
 
         try:
-            response = self._client.get(f"{BASE_URL}/api/v1/models")
+            response = self._client.get(f"{BASE_URL}/api/v1/models", params=params)
             response.raise_for_status()
             data = response.json()
 
             models = data.get("data", [])
-            logger.info("models_fetched", count=len(models))
+            logger.info("models_fetched", count=len(models), filters=filter_info)
 
             return models
 
         except httpx.HTTPError as e:
-            logger.error("failed_to_fetch_models", error=str(e))
+            logger.error("failed_to_fetch_models", error=str(e), filters=filter_info)
             raise
 
     @retry(

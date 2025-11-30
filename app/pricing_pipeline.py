@@ -29,7 +29,14 @@ class PricingPipeline:
         self.repo = SupabaseRepo(
             url=config.supabase_url, service_key=config.supabase_service_key
         )
-        self.discovery = ModelDiscovery(self.or_client, self.repo)
+        self.discovery = ModelDiscovery(
+            self.or_client,
+            self.repo,
+            supported_parameters_filter=config.model_filter_supported_parameters,
+            distillable_filter=config.model_filter_distillable,
+            input_modalities_filter=config.model_filter_input_modalities,
+            output_modalities_filter=config.model_filter_output_modalities,
+        )
         self.validator = PricingValidator(
             repo=self.repo, max_change_percent=config.price_change_threshold_percent
         )

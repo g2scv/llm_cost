@@ -1,0 +1,19 @@
+[Unit]
+Description=LLM Cost Tracker - Daily OpenRouter model pricing sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/g2scv/llm_cost
+EnvironmentFile=/root/g2scv/llm_cost/.env
+ExecStart=/root/g2scv/llm_cost/.venv/bin/python -m app.main --once
+StandardOutput=append:/var/log/llm-cost-tracker.log
+StandardError=append:/var/log/llm-cost-tracker.log
+TimeoutStartSec=1800
+# Restart on failure with exponential backoff
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Run LLM Cost Tracker daily at 2 AM UTC
+
+[Timer]
+# Run every day at 2:00 AM UTC
+OnCalendar=*-*-* 02:00:00 UTC
+# Also run 5 minutes after boot if missed
+OnBootSec=5min
+# Persist timer across reboots
+Persistent=true
+# Randomize up to 30 minutes to avoid thundering herd
+RandomizedDelaySec=1800
+
+[Install]
+WantedBy=timers.target

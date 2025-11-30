@@ -141,6 +141,20 @@ class BackendSync:
             logger.warning("backend_sync_missing_model_slug", model=model)
             return
 
+        # Filter for pure text-to-text models only
+        architecture = model.get("architecture") or {}
+        input_modalities = architecture.get("input_modalities") or []
+        output_modalities = architecture.get("output_modalities") or []
+        
+        if input_modalities != ["text"] or output_modalities != ["text"]:
+            logger.debug(
+                "skipping_non_text_model",
+                model=model_slug,
+                input_modalities=input_modalities,
+                output_modalities=output_modalities,
+            )
+            return
+
         display_name = model.get("name", model_slug)
         provider = model_slug.split("/", 1)[0] if "/" in model_slug else "openrouter"
 

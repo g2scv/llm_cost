@@ -13,9 +13,21 @@ logger = structlog.get_logger(__name__)
 class ModelDiscovery:
     """Handles model discovery and new model detection"""
 
-    def __init__(self, or_client: OpenRouterClient, repo: SupabaseRepo):
+    def __init__(
+        self,
+        or_client: OpenRouterClient,
+        repo: SupabaseRepo,
+        supported_parameters_filter: str | None = None,
+        distillable_filter: bool | None = None,
+        input_modalities_filter: str | None = None,
+        output_modalities_filter: str | None = None,
+    ):
         self.or_client = or_client
         self.repo = repo
+        self.supported_parameters_filter = supported_parameters_filter
+        self.distillable_filter = distillable_filter
+        self.input_modalities_filter = input_modalities_filter
+        self.output_modalities_filter = output_modalities_filter
 
     def discover_models(self) -> tuple[List[Dict[str, Any]], List[str]]:
         """
@@ -24,10 +36,21 @@ class ModelDiscovery:
         Returns:
             Tuple of (all_models, new_model_slugs)
         """
-        logger.info("discovering_models")
+        logger.info(
+            "discovering_models",
+            supported_parameters=self.supported_parameters_filter,
+            distillable=self.distillable_filter,
+            input_modalities=self.input_modalities_filter,
+            output_modalities=self.output_modalities_filter,
+        )
 
-        # Fetch all models from OpenRouter
-        api_models = self.or_client.list_models()
+        # Fetch models from OpenRouter with filtering
+        api_models = self.or_client.list_models(
+            supported_parameters=self.supported_parameters_filter,
+            distillable=self.distillable_filter,
+            input_modalities=self.input_modalities_filter,
+            output_modalities=self.output_modalities_filter,
+        )
 
         # Get existing models from DB
         existing_slugs = set(self.repo.get_all_model_slugs())
